@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->string('client');
-            $table->string('image');
+            $table->string('image')->nullable();
             $table->text('deskripsi');
             $table->date('tanggal_projek');
             $table->timestamps();
