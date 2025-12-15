@@ -11,14 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('portofolio', function (Blueprint $table) {
-            $table->id();
-            $table->string('title');
-            $table->string('client');
-            $table->text('deskripsi');
-            $table->date('tanggal_projek');
-            $table->timestamps();
-        });
+       Schema::table('portofolio_images', function (Blueprint $table) {
+    $table->integer('order')->default(0);
+});
+
     }
 
     /**
@@ -26,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('portofolio');
+        Schema::table('portofolio_images', function (Blueprint $table) {
+            //
+        });
     }
 };

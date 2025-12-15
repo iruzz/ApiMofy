@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('portofolio', function (Blueprint $table) {
-            $table->id();
-            $table->string('title');
-            $table->string('client');
-            $table->text('deskripsi');
-            $table->date('tanggal_projek');
-            $table->timestamps();
-        });
+      Schema::create('portofolio_images', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('portofolio_id')->constrained('portofolio')->cascadeOnDelete();
+        $table->string('image');
+        $table->timestamps();
+});
+
     }
 
     /**
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('portofolio');
+        Schema::dropIfExists('portofolio_images');
     }
 };
