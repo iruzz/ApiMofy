@@ -19,7 +19,6 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 
 // Aktifin middleware auth:sanctum
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
-    Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     
     // Profile/Settings routes
@@ -31,16 +30,10 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     
     // HAPUS 1 GAMBAR (custom route)
        // HAPUS 1 GAMBAR
-    Route::delete(
-        'portofolio/image/{id}',
-        [PortofolioController::class, 'deleteImage']
-    );
+    Route::delete('portofolio/image/{id}', [PortofolioController::class, 'deleteImage']);
 
     // REORDER GAMBAR (POST)
-    Route::post(
-        'portofolio/image/reorder',
-        [PortofolioController::class, 'reorderImage']
-    );
+    Route::post('portofolio/image/reorder', [PortofolioController::class, 'reorderImage']);
 
 
 });
