@@ -5,12 +5,11 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\ServicesController;
 use App\Http\Controllers\Api\PortofolioController;
-
+use App\Http\Controllers\Api\HomeController;
 
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 
-
- Route::get('/', HomeController::class);
+ Route::get('/', [HomeController::class, 'index']);
  Route::get('/layanan', [ServicesController::class, 'index']);
  Route::get('/portofolio', [PortofolioController::class, 'index']);
 

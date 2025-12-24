@@ -10,47 +10,30 @@ use App\Models\Portofolio;
 
 class HomeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function settings()
+    public function index() 
     {
-          $settings = Settings::all();
-
-        return response()->json([
-            'message' => 'Berhasil Ditampilkan',
-            'data' => $settings
-        ]);
-    }
-
-    public function services()
-    {
+         // Ambil semua data
+        $settings = Settings::first(); // atau ::all() tergantung kebutuhan
         $services = Services::all();
-
-        return response()->json([
-            'message' => 'Data Layanan Ditemukan',
-            'data' => $services
-        ]);
-    }
-
-   public function portofolio(Request $request) 
-   {
-     $query = Portofolio::with('images')->latest();
-
-        // Filter berdasarkan paket (jika ada parameter ?paket=basic)
+        
+        $portofolioQuery = Portofolio::with('images')->latest();
+        
+        // Filter paket jika ada
         if ($request->has('paket')) {
-            $query->where('paket', $request->paket);
+            $portofolioQuery->where('paket', $request->paket);
         }
-
-        $data = $query->get();
-
-        // Group by paket (optional, jika mau tampil terkelompok)
-        $grouped = $data->groupBy('paket');
+        
+        $portofolio = $portofolioQuery->get();
+        $portofolioGrouped = $portofolio->groupBy('paket');
 
         return response()->json([
-            'message' => 'Data Portofolio Ditemukan',
-            'data' => $data,
-            'grouped' => $grouped // ← tambahan untuk kelompok per paket
+            'message' => 'Data Homepage Berhasil Dimuat',
+            'data' => [
+                'settings' => $settings,
+                'services' => $services,
+                'portofolio' => $portofolio,
+                'portofolio_grouped' => $portofolioGrouped
+            ]
         ], 200);
-   }
+    }
 }
