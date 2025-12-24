@@ -11,15 +11,26 @@ use Illuminate\Support\Facades\Storage;
 class PortofolioController extends Controller
 {
     // =========================
-    // GET ALL
+    // GET ALL (dengan filter paket optional)
     // =========================
-    public function index()
+    public function index(Request $request)
     {
-        $data = Portofolio::with('images')->latest()->get();
+        $query = Portofolio::with('images')->latest();
+
+        // Filter berdasarkan paket (jika ada parameter ?paket=basic)
+        if ($request->has('paket')) {
+            $query->where('paket', $request->paket);
+        }
+
+        $data = $query->get();
+
+        // Group by paket (optional, jika mau tampil terkelompok)
+        $grouped = $data->groupBy('paket');
 
         return response()->json([
             'message' => 'Data Portofolio Ditemukan',
-            'data' => $data
+            'data' => $data,
+            'grouped' => $grouped // ← tambahan untuk kelompok per paket
         ], 200);
     }
 
@@ -32,7 +43,10 @@ class PortofolioController extends Controller
             'title' => 'required|string',
             'client' => 'required|string',
             'deskripsi' => 'required|string',
+            'fitur_website' => 'required|array', // ← tambah validasi
+            'fitur_website.*' => 'string',
             'tanggal_projek' => 'required|date',
+            'paket' => 'required|in:basic,standard,premium', // ← tambah validasi
             'images.*' => 'image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
@@ -41,7 +55,9 @@ class PortofolioController extends Controller
             'title' => $request->title,
             'client' => $request->client,
             'deskripsi' => $request->deskripsi,
+            'fitur_website' => $request->fitur_website, // ← array otomatis di-cast
             'tanggal_projek' => $request->tanggal_projek,
+            'paket' => $request->paket, // ← tambah ini
         ]);
 
         // 2️⃣ simpan gambar (jika ada)
@@ -67,42 +83,45 @@ class PortofolioController extends Controller
         ], 201);
     }
 
- 
-public function update(Request $request, $id)
-{
-    $portofolio = Portofolio::findOrFail($id);
+    // =========================
+    // UPDATE
+    // =========================
+    public function update(Request $request, $id)
+    {
+        $portofolio = Portofolio::findOrFail($id);
 
-    $request->validate([
-        'title' => 'nullable|string',
-        'client' => 'nullable|string',
-        'deskripsi' => 'nullable|string',
-        'tanggal_projek' => 'nullable|date',
-        'images.*' => 'image|mimes:jpg,jpeg,png|max:2048',
-    ]);
+        $request->validate([
+            'title' => 'nullable|string',
+            'client' => 'nullable|string',
+            'deskripsi' => 'nullable|string',
+            'fitur_website' => 'nullable|array',
+            'fitur_website.*' => 'string',
+            'tanggal_projek' => 'nullable|date',
+            'paket' => 'nullable|in:basic,standard,premium', // ← tambah validasi
+            'images.*' => 'image|mimes:jpg,jpeg,png|max:2048',
+        ]);
 
-    // 🔁 UPDATE DATA (kalau ada)
-    $portofolio->update(
-        $request->only(['title', 'client', 'deskripsi', 'tanggal_projek'])
-    );
+        // 🔁 UPDATE DATA (kalau ada)
+        $portofolio->update(
+            $request->only(['title', 'client', 'deskripsi', 'fitur_website', 'tanggal_projek', 'paket'])
+        );
 
-    // ➕ TAMBAH GAMBAR BARU (AUTO)
-    if ($request->hasFile('images')) {
-        foreach ($request->file('images') as $img) {
-            $path = $img->store('portofolio', 'public'); 
-            // ⬆️ otomatis masuk storage/app/public/portofolio
+        // ➕ TAMBAH GAMBAR BARU (AUTO)
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $img) {
+                $path = $img->store('portofolio', 'public');
 
-            $portofolio->images()->create([
-                'image' => $path
-            ]);
+                $portofolio->images()->create([
+                    'image' => $path
+                ]);
+            }
         }
+
+        return response()->json([
+            'message' => 'Portofolio berhasil diperbarui',
+            'data' => $portofolio->load('images')
+        ]);
     }
-
-    return response()->json([
-        'message' => 'Portofolio berhasil diperbarui',
-        'data' => $portofolio->load('images')
-    ]);
-}
-
 
     // =========================
     // DELETE 1 IMAGE
@@ -123,38 +142,38 @@ public function update(Request $request, $id)
         ], 200);
     }
 
-public function reorderImage(Request $request)
-{
-    $request->validate([
-        'portofolio_id' => 'required|exists:portofolio,id',
-        'orders' => 'required|array',
-        'orders.*.id' => 'required|exists:portofolio_images,id',
-        'orders.*.order' => 'required|integer',
-    ]);
+    // =========================
+    // REORDER IMAGE
+    // =========================
+    public function reorderImage(Request $request)
+    {
+        $request->validate([
+            'portofolio_id' => 'required|exists:portofolio,id',
+            'orders' => 'required|array',
+            'orders.*.id' => 'required|exists:portofolio_images,id',
+            'orders.*.order' => 'required|integer',
+        ]);
 
-    foreach ($request->orders as $item) {
-        $image = PortofolioImage::where('id', $item['id'])
-            ->where('portofolio_id', $request->portofolio_id)
-            ->first();
+        foreach ($request->orders as $item) {
+            $image = PortofolioImage::where('id', $item['id'])
+                ->where('portofolio_id', $request->portofolio_id)
+                ->first();
 
-        // ❌ image bukan milik portofolio ini
-        if (!$image) {
-            return response()->json([
-                'message' => 'Gambar tidak sesuai portofolio'
-            ], 403);
+            if (!$image) {
+                return response()->json([
+                    'message' => 'Gambar tidak sesuai portofolio'
+                ], 403);
+            }
+
+            $image->update([
+                'order' => $item['order']
+            ]);
         }
 
-        $image->update([
-            'order' => $item['order']
+        return response()->json([
+            'message' => 'Urutan gambar berhasil diperbarui'
         ]);
     }
-
-    return response()->json([
-        'message' => 'Urutan gambar berhasil diperbarui'
-    ]);
-}
-
-
 
     // =========================
     // DELETE PORTOFOLIO + ALL IMAGES

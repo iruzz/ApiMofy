@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('portofolio', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('client');
             $table->text('deskripsi');
+            $table->json('fitur_website');
+             $table->enum('paket', ['umkm', 'professional', 'premium']);
             $table->date('tanggal_projek');
             $table->timestamps();
         });
