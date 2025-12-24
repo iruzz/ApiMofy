@@ -9,12 +9,9 @@ use App\Http\Controllers\Api\PortofolioController;
 
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 
- Route::get('/', [SettingsController::class, 'index']);
 
- Route::get('/', [ServicesController::class, 'index']);
+ Route::get('/', HomeController::class);
  Route::get('/layanan', [ServicesController::class, 'index']);
-
- Route::get('/', [PortofolioController::class, 'index']);
  Route::get('/portofolio', [PortofolioController::class, 'index']);
 
 // Aktifin middleware auth:sanctum
