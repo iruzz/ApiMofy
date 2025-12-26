@@ -41,19 +41,17 @@ class PortofolioController extends Controller
     {
         $request->validate([
             'title' => 'required|string',
-            'client' => 'required|string',
             'deskripsi' => 'required|string',
             'fitur_website' => 'required|array', // ← tambah validasi
             'fitur_website.*' => 'string',
             'tanggal_projek' => 'required|date',
-            'paket' => 'required|in:basic,standard,premium', // ← tambah validasi
+            'paket' => 'required|in:umkm,professional,premium', // ← tambah validasi
             'images.*' => 'image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
         // 1️⃣ simpan portofolio
         $portofolio = Portofolio::create([
             'title' => $request->title,
-            'client' => $request->client,
             'deskripsi' => $request->deskripsi,
             'fitur_website' => $request->fitur_website, // ← array otomatis di-cast
             'tanggal_projek' => $request->tanggal_projek,
@@ -92,19 +90,27 @@ class PortofolioController extends Controller
 
         $request->validate([
             'title' => 'nullable|string',
-            'client' => 'nullable|string',
             'deskripsi' => 'nullable|string',
             'fitur_website' => 'nullable|array',
             'fitur_website.*' => 'string',
             'tanggal_projek' => 'nullable|date',
-            'paket' => 'nullable|in:basic,standard,premium', // ← tambah validasi
+            'paket' => 'nullable|in:umkm,professional,premium', // ← tambah validasi
             'images.*' => 'image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         // 🔁 UPDATE DATA (kalau ada)
-        $portofolio->update(
-            $request->only(['title', 'client', 'deskripsi', 'fitur_website', 'tanggal_projek', 'paket'])
-        );
+        $data = $request->only(['title', 'deskripsi', 'fitur_website', 'tanggal_projek', 'paket']);
+
+        // If fitur_website comes as JSON string (from FormData), decode it
+        if (isset($data['fitur_website']) && is_string($data['fitur_website'])) {
+            $decoded = json_decode($data['fitur_website'], true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $data['fitur_website'] = $decoded;
+            }
+        }
+
+        $portofolio->fill($data);
+        $portofolio->save();
 
         // ➕ TAMBAH GAMBAR BARU (AUTO)
         if ($request->hasFile('images')) {
@@ -119,10 +125,36 @@ class PortofolioController extends Controller
 
         return response()->json([
             'message' => 'Portofolio berhasil diperbarui',
-            'data' => $portofolio->load('images')
-        ]);
+            'data' => $portofolio->fresh('images')
+        ], 200);
     }
+    
+    // =========================
+    // STORE IMAGES TO EXISTING PORTFOLIO
+    // =========================
+    public function storeImages(Request $request, $id)
+    {
+        $portofolio = Portofolio::findOrFail($id);
 
+        $request->validate([
+            'images.*' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $img) {
+                $path = $img->store('portofolio', 'public');
+
+                $portofolio->images()->create([
+                    'image' => $path
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Gambar berhasil ditambahkan',
+            'data' => $portofolio->load('images')
+        ], 201);
+    }
     // =========================
     // DELETE 1 IMAGE
     // =========================

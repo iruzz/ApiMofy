@@ -10,11 +10,10 @@ class Portofolio extends Model
 
     protected $fillable = [
         'title',
-        'client',
         'deskripsi',
         'fitur_website',
         'tanggal_projek',
-        'paket' // ← tambah ini
+        'paket'
     ];
 
     protected $casts = [

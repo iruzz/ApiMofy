@@ -24,8 +24,10 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
 
     Route::resource('/portofolio', PortofolioController::class);
     
-    // HAPUS 1 GAMBAR (custom route)
-       // HAPUS 1 GAMBAR
+    // TAMBAH GAMBAR KE PORTFOLIO YANG SUDAH ADA
+    Route::post('portofolio/{id}/images', [PortofolioController::class, 'storeImages']);
+    
+    // HAPUS 1 GAMBAR
     Route::delete('portofolio/image/{id}', [PortofolioController::class, 'deleteImage']);
 
     // REORDER GAMBAR (POST)
