@@ -42,20 +42,29 @@ class PortofolioController extends Controller
         $request->validate([
             'title' => 'required|string',
             'deskripsi' => 'required|string',
-            'fitur_website' => 'required|array', // ← tambah validasi
+            'fitur_website' => 'required|array',
             'fitur_website.*' => 'string',
             'tanggal_projek' => 'required|date',
-            'paket' => 'required|in:umkm,professional,premium', // ← tambah validasi
-            'images.*' => 'image|mimes:jpg,jpeg,png|max:2048'
+            'paket' => 'required|in:umkm,profesional,premium', // ← Fixed typo: profesional not professional
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120' // ← Added webp, increased to 5MB
         ]);
+
+        // Handle fitur_website if it comes as JSON string from FormData
+        $fiturWebsite = $request->fitur_website;
+        if (is_string($fiturWebsite)) {
+            $decoded = json_decode($fiturWebsite, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $fiturWebsite = $decoded;
+            }
+        }
 
         // 1️⃣ simpan portofolio
         $portofolio = Portofolio::create([
             'title' => $request->title,
             'deskripsi' => $request->deskripsi,
-            'fitur_website' => $request->fitur_website, // ← array otomatis di-cast
+            'fitur_website' => $fiturWebsite,
             'tanggal_projek' => $request->tanggal_projek,
-            'paket' => $request->paket, // ← tambah ini
+            'paket' => $request->paket,
         ]);
 
         // 2️⃣ simpan gambar (jika ada)
@@ -94,8 +103,8 @@ class PortofolioController extends Controller
             'fitur_website' => 'nullable|array',
             'fitur_website.*' => 'string',
             'tanggal_projek' => 'nullable|date',
-            'paket' => 'nullable|in:umkm,professional,premium', // ← tambah validasi
-            'images.*' => 'image|mimes:jpg,jpeg,png|max:2048',
+            'paket' => 'nullable|in:umkm,profesional,premium', // ← Fixed typo
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120', // ← Added webp, increased to 5MB
         ]);
 
         // 🔁 UPDATE DATA (kalau ada)
@@ -137,14 +146,17 @@ class PortofolioController extends Controller
         $portofolio = Portofolio::findOrFail($id);
 
         $request->validate([
-            'images.*' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'images' => 'required|array',
+            'images.*' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120', // ← Added webp, increased to 5MB
         ]);
+
+        $uploadedImages = [];
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $img) {
                 $path = $img->store('portofolio', 'public');
 
-                $portofolio->images()->create([
+                $uploadedImages[] = $portofolio->images()->create([
                     'image' => $path
                 ]);
             }
@@ -152,9 +164,14 @@ class PortofolioController extends Controller
 
         return response()->json([
             'message' => 'Gambar berhasil ditambahkan',
-            'data' => $portofolio->load('images')
+            'data' => [
+                'portofolio' => $portofolio->load('images'),
+                'uploaded_count' => count($uploadedImages),
+                'uploaded_images' => $uploadedImages
+            ]
         ], 201);
     }
+    
     // =========================
     // DELETE 1 IMAGE
     // =========================
