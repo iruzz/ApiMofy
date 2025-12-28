@@ -39,32 +39,92 @@ class PortofolioController extends Controller
     // =========================
     public function store(Request $request)
     {
+        // Debug: Log what we receive
+        \Log::info('Store Portfolio Request Data:', [
+            'title' => $request->title,
+            'deskripsi' => $request->deskripsi,
+            'paket' => $request->paket,
+            'tanggal_projek' => $request->tanggal_projek,
+            'fitur_website' => $request->fitur_website,
+            'fitur_website_type' => gettype($request->fitur_website),
+            'all_input' => $request->all(),
+        ]);
+
         $request->validate([
             'title' => 'required|string',
             'deskripsi' => 'required|string',
-            'fitur_website' => 'required|array',
-            'fitur_website.*' => 'string',
+            'fitur_website' => 'required', // ← Temporarily remove array validation to see what we get
             'tanggal_projek' => 'required|date',
-            'paket' => 'required|in:umkm,profesional,premium', // ← Fixed typo: profesional not professional
-            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120' // ← Added webp, increased to 5MB
+            'paket' => 'required|in:umkm,profesional,premium',
+            'harga_project' => 'nullable|numeric|min:0', // ← Add price validation
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120'
         ]);
 
-        // Handle fitur_website if it comes as JSON string from FormData
+        // Handle fitur_website - make it flexible
         $fiturWebsite = $request->fitur_website;
+        
+        // If it's a string (JSON), decode it
         if (is_string($fiturWebsite)) {
             $decoded = json_decode($fiturWebsite, true);
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                 $fiturWebsite = $decoded;
+            } else {
+                // If not JSON, wrap in array
+                $fiturWebsite = [$fiturWebsite];
             }
+        }
+        
+        // If it's not an array yet, make it one
+        if (!is_array($fiturWebsite)) {
+            $fiturWebsite = [$fiturWebsite];
+        }
+
+        \Log::info('Processed fitur_website:', [
+            'original' => $request->fitur_website,
+            'processed' => $fiturWebsite,
+            'type' => gettype($fiturWebsite),
+        ]);
+
+        // Validate the processed array
+        if (empty($fiturWebsite)) {
+            return response()->json([
+                'message' => 'Fitur website harus diisi minimal 1',
+                'errors' => ['fitur_website' => ['Fitur website harus diisi minimal 1']]
+            ], 422);
+        }
+
+        // Debug: Log data before creating
+        \Log::info('Before creating portfolio:', [
+            'title' => $request->title,
+            'deskripsi' => $request->deskripsi,
+            'paket' => $request->paket,
+            'tanggal_projek' => $request->tanggal_projek,
+            'harga_project' => $request->harga_project,
+            'harga_project_type' => gettype($request->harga_project),
+            'harga_project_empty' => empty($request->harga_project),
+            'fitur_website' => $fiturWebsite,
+        ]);
+
+        // Handle harga_project - convert empty string to null
+        $hargaProject = $request->harga_project;
+        if ($hargaProject !== null && trim($hargaProject) === '') {
+            $hargaProject = null;
         }
 
         // 1️⃣ simpan portofolio
         $portofolio = Portofolio::create([
             'title' => $request->title,
             'deskripsi' => $request->deskripsi,
-            'fitur_website' => $fiturWebsite,
+            'fitur_website' => $fiturWebsite, // ← Use processed fitur, not $request->fitur_website!
             'tanggal_projek' => $request->tanggal_projek,
             'paket' => $request->paket,
+            'harga_project' => $hargaProject, // ← Use processed price
+        ]);
+
+        \Log::info('After creating portfolio:', [
+            'id' => $portofolio->id,
+            'harga_project' => $portofolio->harga_project,
+            'harga_project_raw' => $portofolio->getRawOriginal('harga_project'),
         ]);
 
         // 2️⃣ simpan gambar (jika ada)
@@ -103,12 +163,13 @@ class PortofolioController extends Controller
             'fitur_website' => 'nullable|array',
             'fitur_website.*' => 'string',
             'tanggal_projek' => 'nullable|date',
-            'paket' => 'nullable|in:umkm,profesional,premium', // ← Fixed typo
-            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120', // ← Added webp, increased to 5MB
+            'paket' => 'nullable|in:umkm,profesional,premium',
+            'harga_project' => 'nullable|numeric|min:0', // ← Add price validation
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         // 🔁 UPDATE DATA (kalau ada)
-        $data = $request->only(['title', 'deskripsi', 'fitur_website', 'tanggal_projek', 'paket']);
+        $data = $request->only(['title', 'deskripsi', 'fitur_website', 'tanggal_projek', 'paket', 'harga_project']);
 
         // If fitur_website comes as JSON string (from FormData), decode it
         if (isset($data['fitur_website']) && is_string($data['fitur_website'])) {
@@ -117,6 +178,17 @@ class PortofolioController extends Controller
                 $data['fitur_website'] = $decoded;
             }
         }
+
+        // Handle harga_project - convert empty string to null
+        if (isset($data['harga_project']) && trim($data['harga_project']) === '') {
+            $data['harga_project'] = null;
+        }
+
+        \Log::info('Update portfolio data:', [
+            'id' => $id,
+            'harga_project' => $data['harga_project'] ?? 'not set',
+            'data' => $data,
+        ]);
 
         $portofolio->fill($data);
         $portofolio->save();

@@ -13,12 +13,14 @@ class Portofolio extends Model
         'deskripsi',
         'fitur_website',
         'tanggal_projek',
-        'paket'
+        'paket',
+        'harga_project', // ← TAMBAHIN INI BRO!
     ];
 
     protected $casts = [
         'fitur_website' => 'array',
         'tanggal_projek' => 'date',
+        'harga_project' => 'decimal:2', // ← TAMBAHIN CAST INI JUGA!
     ];
 
     // Relationship

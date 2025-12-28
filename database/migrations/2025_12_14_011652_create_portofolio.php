@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('title');
             $table->text('deskripsi');
             $table->json('fitur_website');
-             $table->enum('paket', ['umkm', 'professional', 'premium']);
+            $table->enum('paket', ['umkm', 'profesional', 'premium']); 
+            $table->decimal('harga_project', 12, 2)->nullable();
             $table->date('tanggal_projek');
             $table->timestamps();
         });

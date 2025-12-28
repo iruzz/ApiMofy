@@ -14,7 +14,7 @@ class PortofolioSeeder extends Seeder
     public function run(): void
     {
         // =============================
-        // PAKET BASIC
+        // PAKET UMKM (Rp 150k - 500k)
         // =============================
         
         $basic1 = Portofolio::create([
@@ -28,7 +28,8 @@ class PortofolioSeeder extends Seeder
                 'Google Maps Integration'
             ],
             'tanggal_projek' => '2024-01-15',
-            'paket' => 'umkm'
+            'paket' => 'umkm',
+            'harga_project' => 300000 // Rp 300.000
         ]);
 
         $basic2 = Portofolio::create([
@@ -42,7 +43,8 @@ class PortofolioSeeder extends Seeder
                 'Social Media Integration'
             ],
             'tanggal_projek' => '2024-02-20',
-            'paket' => 'umkm'
+            'paket' => 'umkm',
+            'harga_project' => 250000 // Rp 250.000
         ]);
 
         $basic3 = Portofolio::create([
@@ -56,11 +58,12 @@ class PortofolioSeeder extends Seeder
                 'WhatsApp Integration'
             ],
             'tanggal_projek' => '2024-03-10',
-            'paket' => 'umkm'
+            'paket' => 'umkm',
+            'harga_project' => 350000 // Rp 350.000
         ]);
 
         // =============================
-        // PAKET STANDARD
+        // PAKET PROFESIONAL (Rp 800k - 1.5jt)
         // =============================
         
         $standard1 = Portofolio::create([
@@ -77,7 +80,8 @@ class PortofolioSeeder extends Seeder
                 'SEO Optimized'
             ],
             'tanggal_projek' => '2024-04-05',
-            'paket' => 'professional'
+            'paket' => 'profesional',
+            'harga_project' => 1200000 // Rp 1.200.000
         ]);
 
         $standard2 = Portofolio::create([
@@ -94,7 +98,8 @@ class PortofolioSeeder extends Seeder
                 'WhatsApp Integration'
             ],
             'tanggal_projek' => '2024-05-18',
-            'paket' => 'professional'
+            'paket' => 'profesional',
+            'harga_project' => 1500000 // Rp 1.500.000
         ]);
 
         $standard3 = Portofolio::create([
@@ -112,11 +117,12 @@ class PortofolioSeeder extends Seeder
                 'SEO Friendly'
             ],
             'tanggal_projek' => '2024-06-22',
-            'paket' => 'professional'
+            'paket' => 'profesional',
+            'harga_project' => 1800000 // Rp 1.800.000
         ]);
 
         // =============================
-        // PAKET PREMIUM
+        // PAKET PREMIUM (Rp 3jt - 5jt)
         // =============================
         
         $premium1 = Portofolio::create([
@@ -137,7 +143,8 @@ class PortofolioSeeder extends Seeder
                 'Sales Report & Analytics'
             ],
             'tanggal_projek' => '2024-07-30',
-            'paket' => 'premium'
+            'paket' => 'premium',
+            'harga_project' => 3500000 // Rp 3.500.000
         ]);
 
         $premium2 = Portofolio::create([
@@ -160,7 +167,8 @@ class PortofolioSeeder extends Seeder
                 'Email Automation'
             ],
             'tanggal_projek' => '2024-08-15',
-            'paket' => 'premium'
+            'paket' => 'premium',
+            'harga_project' => 4800000 // Rp 4.800.000
         ]);
 
         $premium3 = Portofolio::create([
@@ -184,10 +192,31 @@ class PortofolioSeeder extends Seeder
                 'Data Backup System'
             ],
             'tanggal_projek' => '2024-09-20',
-            'paket' => 'premium'
+            'paket' => 'premium',
+            'harga_project' => 5500000 // Rp 5.500.000
         ]);
 
-        // Optional: Tambah dummy images (jika mau)
+        // =============================
+        // CONTOH TANPA HARGA (Optional)
+        // =============================
+        
+        Portofolio::create([
+            'title' => 'Website Toko Buku Online',
+            'deskripsi' => 'Toko buku online dengan katalog lengkap dan sistem pencarian advanced.',
+            'fitur_website' => [
+                'Responsive Design',
+                'Product Catalog',
+                'Search & Filter',
+                'Shopping Cart',
+                'Payment Gateway',
+                'Admin Panel'
+            ],
+            'tanggal_projek' => '2024-10-01',
+            'paket' => 'umkm',
+            // harga_project tidak diset (NULL) - tidak akan muncul harga di frontend
+        ]);
+
+        // Optional: Tambah dummy images jika diperlukan
         // $this->addDummyImages($basic1);
         // $this->addDummyImages($standard1);
         // $this->addDummyImages($premium1);
